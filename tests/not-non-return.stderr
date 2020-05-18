@@ -1,0 +1,5 @@
+error: expected a fn with returned type
+ --> $DIR/not-non-return.rs:3:1
+  |
+3 | #[auto_vec]
+  | ^^^^^^^^^^^

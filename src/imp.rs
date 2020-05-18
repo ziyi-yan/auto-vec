@@ -1,8 +1,8 @@
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote};
 use syn::punctuated::Punctuated;
 use syn::token::Comma;
-use syn::{parse_quote, Block, FnArg, ItemFn, Result, ReturnType};
+use syn::{parse_quote, Block, Error, FnArg, ItemFn, Result, ReturnType};
 
 pub fn auto_vec(item_fn: &ItemFn) -> Result<TokenStream> {
     // eprintln!("item_fn: {:#?}", item_fn);
@@ -11,7 +11,7 @@ pub fn auto_vec(item_fn: &ItemFn) -> Result<TokenStream> {
     let ident = item_fn.sig.ident;
     let ident_vec = format_ident!("{}_vec", ident);
     let inputs: Punctuated<FnArg, Comma> = item_fn.sig.inputs.iter().map(vectorize_arg).collect();
-    let output = vectorized_return_type(&item_fn.sig.output);
+    let output = vectorized_return_type(&item_fn.sig.output)?;
     let block = vectorized_body(&ident, &item_fn.sig.inputs);
     let tokens = quote! {
         fn #ident_vec (#inputs) #output #block
@@ -32,13 +32,16 @@ fn vectorize_arg(arg: &FnArg) -> FnArg {
         arg.clone()
     }
 }
-fn vectorized_return_type(return_type: &ReturnType) -> ReturnType {
+fn vectorized_return_type(return_type: &ReturnType) -> Result<ReturnType> {
     if let ReturnType::Type(_, ty) = return_type {
-        parse_quote! {
+        Ok(parse_quote! {
             -> Vec<#ty>
-        }
+        })
     } else {
-        panic!("cannot handle default return type")
+        Err(Error::new(
+            Span::call_site(),
+            "expected a fn with returned type",
+        ))
     }
 }
 
