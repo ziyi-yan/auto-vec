@@ -67,9 +67,25 @@ fn vectorized_body(fn_ident: &proc_macro2::Ident, args: &Punctuated<FnArg, Comma
     } else {
         panic!("cannot handle fn args")
     };
+    let len_checks: Vec<proc_macro2::TokenStream> = args
+        .iter()
+        .map(|arg| {
+            if let FnArg::Typed(pat_type) = arg {
+                let pat = pat_type.pat.clone();
+                quote! {
+                    if #pat.len() != len {
+                        panic!("inputs should have the same numbers of elements")
+                    }
+                }
+            } else {
+                quote! {}
+            }
+        })
+        .collect();
     parse_quote! {
         {
             let len = #arg1_pat.len();
+            #(#len_checks)*
             let mut result = Vec::with_capacity(len);
             for _i in 0..len {
                 let returned = #fn_ident(#(#arg_list),*);
