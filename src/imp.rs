@@ -11,6 +11,9 @@ pub fn auto_vec(item_fn: &ItemFn) -> Result<TokenStream> {
     let ident = item_fn.sig.ident;
     let ident_vec = format_ident!("{}_vec", ident);
     let inputs: Punctuated<FnArg, Comma> = item_fn.sig.inputs.iter().map(vectorize_arg).collect();
+    if inputs.len() == 0 {
+        return Err(Error::new(Span::call_site(), "expected a fn with inputs"));
+    }
     let output = vectorized_return_type(&item_fn.sig.output)?;
     let block = vectorized_body(&ident, &item_fn.sig.inputs);
     let tokens = quote! {

@@ -5,4 +5,5 @@ fn tests() {
     t.compile_fail("tests/not-fn.rs");
     t.pass("tests/vec-sig.rs");
     t.compile_fail("tests/not-non-return.rs");
+    t.compile_fail("tests/not-non-inputs.rs");
 }
